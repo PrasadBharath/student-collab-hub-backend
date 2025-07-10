@@ -1,3 +1,4 @@
+print("main.py is running")
 from fastapi import FastAPI, Body, HTTPException, status, Depends, Header, Path, UploadFile, File, Form, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -78,7 +79,8 @@ app.add_middleware(
         "http://localhost:3000",
         "http://localhost:3001",
         "http://localhost:3002",
-        "https://aesthetic-squirrel-765c27.netlify.app"
+        "https://aesthetic-squirrel-765c27.netlify.app",
+        "http://localhost:3003"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -612,6 +614,19 @@ async def get_posts(skip: int = 0, limit: int = 20):
         posts.append(fix_mongo_ids(post))
     return posts
 
+@app.get("/api/posts/available-pdfs")
+async def list_available_pdfs():
+    import os
+    group_files_dir = os.path.join(os.path.dirname(__file__), "group-files")
+    print("Looking for files in:", group_files_dir)
+    try:
+        files = [f for f in os.listdir(group_files_dir) if f.lower().endswith('.pdf') and os.path.isfile(os.path.join(group_files_dir, f))]
+        print("Found files:", files)
+        return {"files": files}
+    except Exception as e:
+        print("Error in available-pdfs endpoint:", e)
+        raise
+
 @app.get("/api/posts/{post_id}")
 async def get_post(post_id: str):
     post = await posts_collection.find_one({"_id": ObjectId(post_id)})
@@ -732,16 +747,18 @@ async def delete_comment(post_id: str, comment_id: str, user=Depends(get_current
 
 # --- Cloudinary File Download Proxy ---
 import requests
+import os
+from fastapi.responses import FileResponse
+
+GROUP_FILES_DIR = os.path.join(os.path.dirname(__file__), "group-files")
+
 @app.get("/api/posts/pdf-proxy/{filename}")
 async def pdf_proxy(filename: str):
-    cloudinary_url = f"https://res.cloudinary.com/dtrdvg0up/raw/upload/student-collab-hub/pdfs/{filename}"
-    r = requests.get(cloudinary_url, stream=True)
-    if r.status_code != 200:
+    file_path = os.path.join(GROUP_FILES_DIR, filename)
+    if not os.path.isfile(file_path):
+        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="File not found or not accessible")
-    from fastapi.responses import StreamingResponse
-    return StreamingResponse(r.raw, media_type="application/pdf", headers={
-        "Content-Disposition": f"attachment; filename={filename}"
-    })
+    return FileResponse(file_path, media_type="application/pdf", filename=filename)
 
 @app.post("/api/admin/add-demo-user")
 async def add_demo_user(
@@ -799,6 +816,26 @@ async def serve_static_files(full_path: str):
         return FileResponse(index_path)
     
     raise HTTPException(status_code=404, detail="Not found")
+
+import shutil
+
+import os
+PROFILE_PHOTOS_DIR = os.path.join(os.path.dirname(__file__), 'profile-photos')
+os.makedirs(PROFILE_PHOTOS_DIR, exist_ok=True)
+
+app.mount("/profile-photos", StaticFiles(directory=PROFILE_PHOTOS_DIR), name="profile-photos")
+
+@app.post("/api/users/profile-photo")
+async def upload_profile_photo(file: UploadFile = File(...), user=Depends(get_current_user)):
+    # Save file to profile-photos directory
+    filename = f"{user['_id']}_{file.filename}"
+    file_path = os.path.join(PROFILE_PHOTOS_DIR, filename)
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    # Save relative path in DB
+    photo_url = f"/profile-photos/{filename}"
+    await users_collection.update_one({"_id": user["_id"]}, {"$set": {"photo": photo_url}})
+    return {"photo": photo_url}
 
 if __name__ == "__main__":
     import uvicorn

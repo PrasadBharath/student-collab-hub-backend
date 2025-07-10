@@ -3,10 +3,15 @@ import aiohttp
 import os
 from motor.motor_asyncio import AsyncIOMotorClient
 from urllib.parse import quote
+from dotenv import load_dotenv
 
-MONGO_DETAILS = "mongodb+srv://Mamidipaka_Bhagavan_Vara_Prasad:bharath%400712@cluster0.v3qjbj6.mongodb.net/student_collab_hub?retryWrites=true&w=majority&appName=Cluster0"
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '.env'))
+
+MONGO_DETAILS = os.getenv('MONGO_DETAILS')
+# MONGO_DETAILS = "mongodb+srv://Mamidipaka_Bhagavan_Vara_Prasad:bharath%400712@cluster0.v3qjbj6.mongodb.net/student_collab_hub?retryWrites=true&w=majority&appName=Cluster0"
 client = AsyncIOMotorClient(MONGO_DETAILS)
-database = client["student_collab_hub"]
+# database = client["student_collab_hub"]
+database = client[os.getenv('MONGO_DB')]
 resources_collection = database.get_collection("resources")
 
 resources_dir = os.path.join(os.path.dirname(__file__), "resources-files")
