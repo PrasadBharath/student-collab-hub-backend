@@ -13,6 +13,8 @@ from bson import ObjectId
 from fastapi.encoders import jsonable_encoder
 from fastapi import APIRouter
 from fastapi.staticfiles import StaticFiles
+from dotenv import load_dotenv
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '.env'))
 
 # --- Cloudinary Integration ---
 import cloudinary
@@ -74,7 +76,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "https://your-netlify-site.netlify.app"
+        "http://localhost:3001",
+        "http://localhost:3002",
+        "https://aesthetic-squirrel-765c27.netlify.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -97,7 +101,7 @@ activitylog_collection = database.get_collection("activitylog")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # JWT settings (move this block up)
-SECRET_KEY = "your_secret_key_here"  # Change this to a strong secret in production
+SECRET_KEY = os.getenv('SECRET_KEY')  # Change this to a strong secret in production
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
