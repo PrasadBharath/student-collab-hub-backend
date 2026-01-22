@@ -284,6 +284,20 @@ async def get_auth_me(user=Depends(get_current_user)):
     user.pop("password", None)
     return {"user": user}
 
+@app.put("/api/auth/me")
+async def update_auth_me(update: UserUpdate, user=Depends(get_current_user)):
+    update_data = {k: v for k, v in update.dict().items() if v is not None}
+    # If email is being updated, check for uniqueness
+    if "email" in update_data and update_data["email"] != user["email"]:
+        existing = await users_collection.find_one({"email": update_data["email"]})
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already in use")
+    await users_collection.update_one({"email": user["email"]}, {"$set": update_data})
+    user.update(update_data)
+    user = fix_mongo_ids(user)
+    user.pop("password", None)
+    return {"user": user}
+
 @app.get("/api/users/profile")
 async def get_profile(user=Depends(get_current_user)):
     user = fix_mongo_ids(user)
