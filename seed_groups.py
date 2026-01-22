@@ -1,7 +1,12 @@
 import asyncio
+import os
 from motor.motor_asyncio import AsyncIOMotorClient
+from dotenv import load_dotenv
 
-MONGO_DETAILS = "mongodb+srv://Mamidipaka_Bhagavan_Vara_Prasad:bharath%400712@cluster0.v3qjbj6.mongodb.net/student_collab_hub?retryWrites=true&w=majority&appName=Cluster0"
+load_dotenv()
+MONGO_DETAILS = os.getenv('MONGO_DETAILS')
+if not MONGO_DETAILS:
+    raise ValueError("MONGO_DETAILS environment variable is not set")
 client = AsyncIOMotorClient(MONGO_DETAILS)
 database = client["student_collab_hub"]
 groups_collection = database.get_collection("groups")

@@ -17,6 +17,11 @@ from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '.env'))
 
+# Get MongoDB connection string from environment variable
+MONGO_DETAILS = os.getenv('MONGO_DETAILS')
+if not MONGO_DETAILS:
+    raise ValueError("MONGO_DETAILS environment variable is not set")
+
 # --- Cloudinary Integration ---
 import cloudinary
 import cloudinary.uploader
@@ -88,7 +93,6 @@ app.add_middleware(
 )
 
 # MongoDB setup (move this block here)
-MONGO_DETAILS = "mongodb+srv://Mamidipaka_Bhagavan_Vara_Prasad:R3hiOvxnlt6Mn4pT@cluster0.v3qjbj6.mongodb.net/student_collab_hub?retryWrites=true&w=majority&appName=Cluster0"
 client = AsyncIOMotorClient(MONGO_DETAILS)
 database = client["student_collab_hub"]
 users_collection = database.get_collection("users")
