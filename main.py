@@ -88,7 +88,7 @@ app.add_middleware(
 )
 
 # MongoDB setup (move this block here)
-MONGO_DETAILS = "mongodb+srv://Mamidipaka_Bhagavan_Vara_Prasad:bharath%400712@cluster0.v3qjbj6.mongodb.net/student_collab_hub?retryWrites=true&w=majority&appName=Cluster0"
+MONGO_DETAILS = "mongodb+srv://Mamidipaka_Bhagavan_Vara_Prasad:R3hiOvxnlt6Mn4pT@cluster0.v3qjbj6.mongodb.net/student_collab_hub?retryWrites=true&w=majority&appName=Cluster0"
 client = AsyncIOMotorClient(MONGO_DETAILS)
 database = client["student_collab_hub"]
 users_collection = database.get_collection("users")
